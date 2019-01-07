@@ -1,12 +1,3 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "ThisOutlookSession"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = True
 Option Explicit
 
 Private m_Folder As Outlook.MAPIFolder
@@ -32,11 +23,10 @@ On Error GoTo PROC_ERR
     Dim CurrentFolder As Outlook.MAPIFolder
     Dim Subfolder As Outlook.MAPIFolder
     Dim List As New VBA.Collection
-    Dim Folders As Outlook.Folders
     Dim Item As Variant
 
     Dim objParentFolder, objPriorParentFolder As Outlook.Folder ' parent
-    Dim newFolderName, parentname 'As String
+    Dim sNewFolderName, sParentName 'As String
     Dim strFilepath
     
     Dim xlApp As Object 'Excel.Application
@@ -64,8 +54,6 @@ On Error GoTo PROC_ERR
     Set xlSht = xlWkb.Worksheets(1)
     
     Set objParentFolder = Session.GetDefaultFolder(olFolderInbox)
-    Set Folders = objParentFolder.Folders
-    Dim olFolder As Outlook.MAPIFolder
 
     Dim MaxLevel, iCell As Integer
     MaxLevel = xlSht.Range(xlSht.Cells(2, 1), xlSht.Cells(2, 2).End(-4121)).Count
@@ -81,58 +69,94 @@ On Error GoTo PROC_ERR
     
     Set objParentFolder = Application.ActiveExplorer.CurrentFolder
     Dim objNewFolder As Outlook.Folder
-                 
+    
+
+    Dim ParentMemberNum(1) As Double
+    'ReDim Preserve ParentMemberNum(MaxLevel)
+    
     While xlSht.Cells(iRow, 1) <> ""
     
         For iCol = 1 To 2
         
-            parentname = xlSht.Cells(iRow, 1)
-            newFolderName = xlSht.Cells(iRow, 2)
+            sParentName = xlSht.Cells(iRow, 1)
+            sNewFolderName = xlSht.Cells(iRow, 2)
                                        
             On Error Resume Next
             
-            If parentname = "Inbox" And iCol = 1 Then
+            If sParentName = "Inbox" And iCol = 1 Then
                 Set objParentFolder = Session.GetDefaultFolder(olFolderInbox)
+                'ParentMemberNum(iRow) = sParentName
             Else
-            
-                If parentname <> newFolderName Then
+                         
+                'If sParentName <> ParentMemberNum(iRow) Then
+                    'ParentMemberNum(iRow) = sParentName
+                'End If
+                         
+                If sParentName <> sNewFolderName Then
+                
                     If Application.ActiveExplorer.CurrentFolder.Folders.Count = 0 Then 'No SubFolders exist
-                        Set objNewFolder = Application.ActiveExplorer.CurrentFolder.Folders.Add(newFolderName)
-                        Debug.Print "Add  New Folder " & newFolderName & " Created"
-                    ElseIf Application.ActiveExplorer.CurrentFolder.Folders.Count = 1 And Application.ActiveExplorer.CurrentFolder.Folders.Item(1) = newFolderName Then
-                        
-                        Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(CStr(newFolderName)) 'Worked Created SubFolder
-                        Debug.Print "Set Application CurrentFolder = " & objParentFolder.Item(CStr(newFolderName)).FolderPath
+                        Set objNewFolder = Application.ActiveExplorer.CurrentFolder.Folders.Add(sNewFolderName)
+                        Debug.Print "Add  New Folder " & sNewFolderName & " Created"
+                    ElseIf Application.ActiveExplorer.CurrentFolder.Folders.Item(1) = sNewFolderName And iCol = 2 Then
                     
-                    ElseIf Not FolderExist(Application.ActiveExplorer.CurrentFolder.Folders, CStr(newFolderName)) Then
-                    
-                        Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(CStr(parentname)) 'Worked Created SubFolder
-                        Debug.Print "Set Application CurrentFolder = \\Alberto.Ramos@miamidade.gov\Inbox\" & parentname
+                        If sParentName <> Application.ActiveExplorer.CurrentFolder.Folders.Item(1) Then
+                            'go back up to parent folder for continued iteration of childern folders
+                            Set objParentFolder = objParentFolder.Folders(CStr(sParentName)) 'Worked Created SubFolder
+                            Set objParentFolder = Application.ActiveExplorer.CurrentFolder.Folders 'Worked Created SubFolder
+                            Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(CStr(sParentName)) 'Worked Created SubFolder - Changed the side Folder Preview
+                        Else
                         
-                        Set objParentFolder = objParentFolder.Folders(CStr(parentname)) 'Worked Created SubFolder
+                            'Current Folder Iteration equals current Outlook Folder
+                            Set objParentFolder = objParentFolder.Folders(CStr(sNewFolderName)) 'Worked Created SubFolder
+                            Set objParentFolder = Application.ActiveExplorer.CurrentFolder.Folders 'Worked Created SubFolder
+                            Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(CStr(sNewFolderName)) 'Worked Created SubFolder - Changed the side Folder Preview
+                        
+                        End If
+                        
+                   
+                    ElseIf Application.ActiveExplorer.CurrentFolder.Folders.Count = 1 And Application.ActiveExplorer.CurrentFolder.Folders.Item(1) = sNewFolderName Then
+
+                        Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(CStr(sNewFolderName)) 'Worked Created SubFolder
+                        Debug.Print "Set Application CurrentFolder = " & objParentFolder.Item(CStr(sNewFolderName)).FolderPath
+                        Debug.Print "Set Application CurrentFolder = " & Application.ActiveExplorer.CurrentFolder.Folders.Item(1)
+                    
+                    ElseIf Not FolderExist(Application.ActiveExplorer.CurrentFolder.Folders, CStr(sNewFolderName)) Then
+                    
+                        Set objParentFolder = objParentFolder.Folders(CStr(sParentName)) 'Worked Created SubFolder
                         Set objParentFolder = Application.ActiveExplorer.CurrentFolder.Folders 'Worked Created SubFolder
-                                              
-                        Set objNewFolder = Application.ActiveExplorer.CurrentFolder.Folders.Add(newFolderName)
+                        Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(CStr(sParentName)) 'Worked Created SubFolder - Changed the side Folder Preview
+                        Set Application.ActiveExplorer.CurrentFolder = GetFolderPath(objParentFolder.Item(CStr(sParentName)).FolderPath)
                         
-                        Debug.Print " New Folder: " & newFolderName & ", Parent Folder: " & parentname
-                    Else
-                        Debug.Print "Prep Folder for next Iteration: " & "\\Alberto.Ramos@miamidade.gov\Inbox\" & newFolderName
-                        Debug.Print "Source ColNum" & iCol
-                        Debug.Print "Source RowNum" & iRow
-                        Debug.Print "newFolderName:" & newFolderName
-                        Debug.Print "parentname:" & parentname
-                        Set Application.ActiveExplorer.CurrentFolder = GetFolderPath("\\Alberto.Ramos@miamidade.gov\Inbox\" & newFolderName)
-    
+                        Set Application.ActiveExplorer.CurrentFolder = FindInFolders(objParentFolder.Item(CStr(sParentName)), sParentName)
+                        
+                        Set objNewFolder = Application.ActiveExplorer.CurrentFolder.Folders.Add(sNewFolderName)
+                        
+                        Debug.Print "Parent Folder: " & sParentName & ", Child Folder: " & sNewFolderName
+                                               
+                    Else 'Folder exist
+                        Debug.Print "Prep Folder for next Iteration: " & objParentFolder.Item(CStr(sNewFolderName)).FolderPath
+                        Debug.Print "Source ColNum: " & iCol
+                        Debug.Print "Source RowNum: " & iRow
+                        Debug.Print "newFolderName: " & sNewFolderName
+                        Debug.Print "parentname: " & sParentName
+                        'Set Application.ActiveExplorer.CurrentFolder = GetFolderPath("\\Alberto.Ramos@miamidade.gov\Inbox\" & sNewFolderName)
+                        'Set Application.ActiveExplorer.CurrentFolder = GetFolderPath(objParentFolder.Item(CStr(sNewFolderName)).FolderPath)
+
+                        'Set objParentFolder = objParentFolder.Folders(CStr(sNewFolderName)) 'Worked Created SubFolder
+                        'Set objParentFolder = Application.ActiveExplorer.CurrentFolder.Folders 'Worked Created SubFolder
+                        'Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(CStr(sNewFolderName)) 'Worked Created SubFolder - Changed the side Folder Preview
+
                     End If
-                                    
+
                     iCell = 1
-                    
+
                 ElseIf xlSht.Cells(iRow, 1) = objParentFolder.Name Then
                     'Parent column matches Parent Object Name movenext keep parent name?
                     Debug.Print xlSht.Cells(iRow, 1)
                     Debug.Print objParentFolder.Name
+                
                 End If
-            
+
             End If 'End Inbox Object Assignment
             
         Next iCol 'Goto Next Field(Column)
