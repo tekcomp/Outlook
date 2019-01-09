@@ -109,7 +109,6 @@ On Error GoTo PROC_ERR
                 
                     If Application.ActiveExplorer.CurrentFolder.Folders.Count = 0 Then 'No SubFolders exist
 
-
                         Set objNewFolder = Application.ActiveExplorer.CurrentFolder.Folders.Add(sNewFolderName)
                         Debug.Print "create New Folder " & sNewFolderName & " Objected Created"
 'MsgBox ("New Folder Created: " & sNewFolderName)
@@ -150,8 +149,7 @@ On Error GoTo PROC_ERR
                         End If
                     
                     ElseIf Not FolderExist(Application.ActiveExplorer.CurrentFolder.Folders, CStr(sNewFolderName)) Then
-                    
-                        
+                                            
                         If iRow > 2 Then
                          
                             If iCol = 1 Then 'Make sure we have a leaf member to for creating folders
@@ -172,13 +170,35 @@ On Error GoTo PROC_ERR
                                         
                                     DoEvents
                                     
-
                                 ElseIf CStr(ParentMemberNum(iVal - 1)) <> Application.ActiveExplorer.CurrentFolder.Name Then 'Prior Member does not match current selected folder
                                     
-
+                                        '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ added this line; to better improve iteration. 1/9/2019 11:22 AM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                                    
+                                    If objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(objParentFolder.Count).Folders.Count).Folders.Count > 1 And CStr(objParentFolder.Folders.Parent) <> CStr(ParentMemberNum(iVal)) Then
+                                        'Lets change the Parent (Division) folder to be the correct one
+                                        
+                                        Debug.Print objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(objParentFolder.Count).Folders.Count)
+                                        
+                                        
+                                        Debug.Print Application.ActiveExplorer.CurrentFolder
+                                        
+                                        Set objParentFolder = objParentFolder.Folders(CStr(ParentMemberNum(iVal))) 'Worked Created SubFolder
+                                        Set Application.ActiveExplorer.CurrentFolder = objParentFolder
+                                        Set objParentFolder = Application.ActiveExplorer.CurrentFolder 'Worked Created SubFolder
+                                            
+                                        Set objParentFolder = objParentFolder.Folders(CStr(ParentMemberNum(iVal))) 'Worked Created SubFolder
+                                        Set Application.ActiveExplorer.CurrentFolder = objParentFolder
+                                        Set objParentFolder = Application.ActiveExplorer.CurrentFolder 'Worked Created SubFolder
+                                                                                
+                                        
+                                        
+                                    End If
+                                    
                                     Debug.Print "Current Selected folder " & Application.ActiveExplorer.CurrentFolder.Name
                                     Debug.Print "lets focus on the last parent member " & ParentMemberNum(iVal)
-                                    If objParentFolder.Item(5).Folders.Count > 1 Then
+                                    If objParentFolder.Folders.Item(1) > 1 Then
+                                        Debug.Print ""
+                                    ElseIf objParentFolder.Item(5).Folders.Count > 1 Then
                                     '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Commend out first line; to better improve iteration. 1/9/2019 8:15AM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
                                         'If ParentMemberNum(iVal) = objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Item(objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Count).Name Then
                                         'If ParentMemberNum(iVal) = objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Item(objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Count).Name And CStr(xlSht.Cells(iRow - 1, 2).Value) = CStr(xlSht.Cells(iRow, 1).Value) Then
