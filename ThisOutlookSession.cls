@@ -179,7 +179,10 @@ On Error GoTo PROC_ERR
                                     Debug.Print "Current Selected folder " & Application.ActiveExplorer.CurrentFolder.Name
                                     Debug.Print "lets focus on the last parent member " & ParentMemberNum(iVal)
                                     If objParentFolder.Item(5).Folders.Count > 1 Then
-                                        If ParentMemberNum(iVal) = objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Item(objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Count).Name Then
+                                    '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Commend out first line; to better improve iteration. 1/9/2019 8:15AM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                                        'If ParentMemberNum(iVal) = objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Item(objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Count).Name Then
+                                        'If ParentMemberNum(iVal) = objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Item(objParentFolder.Item(objParentFolder.Count).Folders.Item(objParentFolder.Item(5).Folders.Count).Folders.Count).Name And CStr(xlSht.Cells(iRow - 1, 2).Value) = CStr(xlSht.Cells(iRow, 1).Value) Then
+                                        If CStr(xlSht.Cells(iRow - 1, 2).Value) = CStr(xlSht.Cells(iRow, 1).Value) Then
                                             
                                             Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(5).Folders.Item(1).Folders.Item(2) 'go up one to the root folder childer folder to reset structure
                                             
@@ -192,6 +195,19 @@ On Error GoTo PROC_ERR
                                     
                                         Debug.Print "Do Nothing we kewl for next child member to be added to parent"
                                         Debug.Print Application.ActiveExplorer.CurrentFolder
+                                        
+                                    ElseIf objParentFolder.Item(5).Folders.Count = 1 And CStr(xlSht.Cells(iRow - 1, 2).Value) = CStr(xlSht.Cells(iRow, 1).Value) Then
+                                        'If Child value equals current Parent value then, We Need to focus/set to the right folder - next Division"
+                                        Debug.Print "We Need to set to the right folder - next Division"
+                                        Debug.Print Application.ActiveExplorer.CurrentFolder
+                                        
+                                        Set objParentFolder = objParentFolder.Folders(CStr(ParentMemberNum(iVal))) 'Worked Created SubFolder
+                                        Set Application.ActiveExplorer.CurrentFolder = objParentFolder
+                                        Set objParentFolder = Application.ActiveExplorer.CurrentFolder 'Worked Created SubFolder
+                                            
+                                        Set objParentFolder = objParentFolder.Folders(CStr(ParentMemberNum(iVal))) 'Worked Created SubFolder
+                                        Set Application.ActiveExplorer.CurrentFolder = objParentFolder
+                                        Set objParentFolder = Application.ActiveExplorer.CurrentFolder 'Worked Created SubFolder
                                         
                                     End If
                                 Else
@@ -221,10 +237,17 @@ On Error GoTo PROC_ERR
                             Debug.Print "newFolderName: " & sNewFolderName
                             Debug.Print "parentname: " & sParentName
 
-
+                            If iRow > 2 And Application.ActiveExplorer.CurrentFolder = "Inbox" Then
+                                Set objParentFolder = Application.ActiveExplorer.CurrentFolder.Folders 'Worked Created SubFolder
+                                Set Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(CStr(sParentName)) 'Worked Created SubFolder - Changed the side Folder Preview
+                                Set Application.ActiveExplorer.CurrentFolder = GetFolderPath(objParentFolder.Item(CStr(sParentName)).FolderPath)
+        
+                                Set Application.ActiveExplorer.CurrentFolder = FindInFolders(objParentFolder.Item(CStr(sParentName)), sParentName)
+                                Set Application.ActiveExplorer.CurrentFolder = objParentFolder
+                            End If
                             Set objNewFolder = Application.ActiveExplorer.CurrentFolder.Folders.Add(sNewFolderName)
                             'Application.ActiveExplorer.CurrentFolder = objParentFolder.Item(5).Folders.Item(1)
-                            
+
 'MsgBox ("New Folder Created: " & sNewFolderName)
 
                     Else 'Folder exist
